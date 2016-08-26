@@ -5,23 +5,25 @@ using System.Web.Http;
 
 using CustomWebApi;
 
-// All of the rest is WebAPI thing, so no Kentico stuff in here
+using CMS.Helpers;
+using CMS.Base;
+    
 namespace CustomWebApi
 {
     public class SystemController : ApiController
     {
-        [HttpGet]
+        [HttpPut]
         [Route("kenticoapi/system/restart-server")]
         public HttpResponseMessage RestartServer()
         {
 
-            if (true) //was reboot succesful?
+            if (SystemHelper.RestartApplication(SystemContext.WebApplicationPhysicalPath)) //was reboot succesful?
             {
-                return Request.CreateResponse(HttpStatusCode.OK, new { });
+                return Request.CreateResponse(HttpStatusCode.OK, new {path = SystemContext.WebApplicationPhysicalPath });
             }
             else
             {
-                return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { error_message = "Unable to restart!" });
+                return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { error_message = "Unable to restart:" + SystemContext.WebApplicationPhysicalPath });
             }
         }
 

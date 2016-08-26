@@ -42,6 +42,9 @@
     <Reference Include="CMS.DataEngine">
       <HintPath>..\Lib\CMS.DataEngine.dll</HintPath>
     </Reference>
+    <Reference Include="CMS.EventLog">
+      <HintPath>..\Lib\CMS.EventLog.dll</HintPath>
+    </Reference>
     <Reference Include="CMS.Helpers, Version=9.0.0.0, Culture=neutral, PublicKeyToken=834b12a258f213f9, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Lib\CMS.Helpers.dll</HintPath>

@@ -12,8 +12,12 @@ Example usage
 =======================
 -to get JSON list of last 50 event logs Make a POST request to:
 
-```YOURDOMAIN/kenticoapi/system/show-eventlog```
+```
+YOURDOMAIN/kenticoapi/system/show-eventlog
+```
 
 e.g.
 
-```http://localhost:8080/kenticoapi/system/show-eventlog```
+```
+http://localhost:8080/kenticoapi/system/show-eventlog
+```

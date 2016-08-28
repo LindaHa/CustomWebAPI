@@ -5,8 +5,8 @@ Custom Kentico Module implemented as WebApi project
 How to add the module to your Kentico solution
 =======================
 1. Clone the repository to your local machine
-2. Reference the ```CustomWebApi.sln``` from the repository in your Kentico Web App solution (right click solution -> add -> existing project)
-3. Reference the ```CustomWebApi``` project in ```CMSApp``` project (right click CMSApp project -> add -> reference -> Project tab -> check CustomWebApi)
+2. In VS reference the ```CustomWebApi.sln``` from the repository in your Kentico Web App solution (right click solution -> add -> existing project)
+3. In VS reference the ```CustomWebApi``` project in ```CMSApp``` project (right click CMSApp project -> add -> reference -> Project tab -> check CustomWebApi)
 
 Example usage
 =======================

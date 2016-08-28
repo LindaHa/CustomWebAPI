@@ -12,6 +12,7 @@ using CMS.DataEngine;
 using System.Data;
 using System.Linq;
 using System.Collections.Generic;
+using CMS.Scheduler;
 
 namespace CustomWebApi
 {
@@ -55,6 +56,41 @@ namespace CustomWebApi
             }
             return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = "Unable to retrieve the eventlog." });
         }
+
+        [HttpPost]
+        [Route("kenticoapi/system/clear-cache")]
+        public HttpResponseMessage ClearCache()
+        {
+            try
+            {
+                CacheHelper.ClearCache();
+                return Request.CreateResponse(HttpStatusCode.OK);
+            }
+            catch(Exception e)
+            {
+                return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
+            }   
+        }
+
+        [HttpPost]
+        [Route("kenticoapi/system/clean-unused-memory")]
+        public HttpResponseMessage CleanUnusedMemory()
+        {
+            Object source = new object(); 
+            TaskInfo task = new TaskInfo();
+            UnusedMemoryCleaner cleaner = new UnusedMemoryCleaner();
+            string text = cleaner.Execute(task);
+            //if (CacheHelper.ClearCache() is ) //was reboot succesful?
+            //{
+            //    return Request.CreateResponse(HttpStatusCode.OK);
+            //}
+            //else
+            //{
+            //    return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = "Unable to clear cache:" + SystemContext.WebApplicationPhysicalPath });
+            //}
+            return Request.CreateResponse(HttpStatusCode.OK);
+        }
+
 
         [HttpGet]
         [Route("kenticoapi/system/testaction/{id}")]

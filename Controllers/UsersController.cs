@@ -23,14 +23,14 @@ namespace CustomWebApi
         {
             try{
                 DataSet users = UserInfoProvider.GetFullUsers("", "UserID ASC");
-                List<Object> eventList = users.Tables[0].AsEnumerable().Select(
+                List<Object> usersList = users.Tables[0].AsEnumerable().Select(
                         dataRow => new {
                             UserId = dataRow.Field<int>("userid"),
                             FirstName = dataRow.Field<string>("firstname"),
                             Surname = dataRow.Field<string>("lastname"),
                             Email = dataRow.Field<string>("email"),
                         }).ToList<Object>();
-                return Request.CreateResponse(HttpStatusCode.OK, new { eventList = eventList });
+                return Request.CreateResponse(HttpStatusCode.OK, new { usersList = usersList });
             }
             catch (Exception e)
             {

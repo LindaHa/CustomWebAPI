@@ -35,26 +35,26 @@ namespace CustomWebApi
         [HttpGet]
         [Route("kenticoapi/system/show-eventlog")]
         public HttpResponseMessage ShowEventlog()
-        {            
-            ObjectQuery<EventLogInfo> eventsQuery = EventLogProvider.GetEvents();
-            if (eventsQuery != null)
+        {
+            try
             {
-                DataSet results = eventsQuery.OrderByDescending("EventTime").TopN(50).Execute();
-                if (results != null)
-                {
-                    List<Object> eventList = results.Tables[0].AsEnumerable().Select(
-                        dataRow => new {
-                            EventCode = dataRow.Field<string>("EventCode"),
-                            EventDescription = dataRow.Field<string>("EventDescription"),
-                            EventTime = dataRow.Field<DateTime>("EventTime"),
-                            EventID = dataRow.Field<int>("EventID"),
-                            EventMachineName = dataRow.Field<string>("EventMachineName"),
-                            EventType = dataRow.Field<string>("EventType"),
-                        }).ToList<Object>();
-                    return Request.CreateResponse(HttpStatusCode.OK, new { eventList = eventList });
-                }
+                ObjectQuery<EventLogInfo> events = EventLogProvider.GetEvents().OrderByDescending("EventTime").TopN(50); 
+                List<Object> eventList = events.Select( 
+                    eventLogInfo => new
+                    {
+                        EventCode = eventLogInfo.EventCode,
+                        EventDescription = eventLogInfo.EventDescription,
+                        EventTime = eventLogInfo.EventTime,
+                        EventID = eventLogInfo.EventID,
+                        EventMachineName = eventLogInfo.EventMachineName,
+                        EventType = eventLogInfo.EventType,
+                    }).ToList<Object>();
+                return Request.CreateResponse(HttpStatusCode.OK, new { eventList = eventList });
             }
-            return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = "Unable to retrieve the eventlog." });
+            catch (Exception e)
+            {
+                return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
+            }
         }
 
         [HttpPost]
@@ -76,19 +76,17 @@ namespace CustomWebApi
         [Route("kenticoapi/system/clean-unused-memory")]
         public HttpResponseMessage CleanUnusedMemory()
         {
-            Object source = new object(); 
-            TaskInfo task = new TaskInfo();
-            UnusedMemoryCleaner cleaner = new UnusedMemoryCleaner();
-            string text = cleaner.Execute(task);
-            //if (CacheHelper.ClearCache() is ) //was reboot succesful?
-            //{
-            //    return Request.CreateResponse(HttpStatusCode.OK);
-            //}
-            //else
-            //{
-            //    return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = "Unable to clear cache:" + SystemContext.WebApplicationPhysicalPath });
-            //}
-            return Request.CreateResponse(HttpStatusCode.OK);
+            try
+            {
+                // Collect the memory
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                return Request.CreateResponse(HttpStatusCode.OK);
+            }
+            catch (Exception e)
+            {
+                return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
+            }
         }
 
 

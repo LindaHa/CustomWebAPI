@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using CMS.MembershipProvider;
 using CMS.Membership;
 using Newtonsoft.Json.Linq;
+using CMS.SiteProvider;
 
 namespace CustomWebApi
 {
@@ -51,24 +52,115 @@ namespace CustomWebApi
         public HttpResponseMessage RemoveUsersFromRoles([FromBody]JObject postData)
         {
             string[] usernames, roleNames;
+            string siteName;
             try
             {
                 usernames = postData["usernames"].ToObject<string[]>();
                 roleNames = postData["roleNames"].ToObject<string[]>();
-            }catch(Exception e)
+                siteName = postData["siteName"].ToObject<string>();
+            }
+            catch (Exception e)
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = e.Message });
             }
-            CMSRoleProvider cmsRoleProvider = new CMSRoleProvider();
+            UserInfo user;
+            //Checks if all usernames are valid
+            for (int i = 0; i < usernames.Length; i++)
+            {
+                user = UserInfoProvider.GetUserInfo(usernames[i]);
+                if (user == null)
+                {
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = "invalid username: " + usernames[i]});
+                }
+            }
+
+            RoleInfo role;
+            //Checks if all roles are valid
+            for (int i = 0; i < roleNames.Length; i++)
+            {
+                role = RoleInfoProvider.GetRoleInfo(roleNames[i], siteName, true);
+                if (role == null)
+                {
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = "invalid roleName: " + roleNames[i] });
+                }
+            }
+
+            for (int i = 0; i < usernames.Length; i++)
+            {
+                user = UserInfoProvider.GetUserInfo(usernames[i]);
+                for (int j = 0; j < roleNames.Length; j++)
+                {
+                    bool checkGlobalRoles = true;
+                    bool checkMembership = true;
+
+                    // Checks whether the user is assigned to a role with the "Rolename" code name
+                    if (user.IsInRole(roleNames[j], siteName, checkGlobalRoles, checkMembership))
+                    {
+                        // Removes the user from the role
+                        try
+                        {
+                            role = RoleInfoProvider.GetRoleInfo(roleNames[i], siteName, true);
+                            UserInfoProvider.RemoveUserFromRole(user.UserID, role.RoleID);
+                        } catch (Exception e)
+                        {
+                            return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = e.Message });
+                        }
+
+                    }
+                }               
+            }
+            return Request.CreateResponse(HttpStatusCode.OK, new { });            
+        }
+
+        [HttpPost]
+        [Route("kenticoapi/users/edit-user")]
+        public HttpResponseMessage EditUser([FromBody]JObject postData)
+        {
+            string username;
             try
             {
-                cmsRoleProvider.RemoveUsersFromRoles(usernames, roleNames);
-                return Request.CreateResponse(HttpStatusCode.OK, new { });
+                username = postData["usernames"].ToObject<string>();
+            } catch (Exception e)
+            {
+                return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
+            }
+
+            UserInfo updateUser = UserInfoProvider.GetUserInfo(username);
+            if (updateUser != null)
+            {
+                // Updates the user's properties
+                updateUser.FirstName = updateUser.FirstName.ToLowerCSafe();
+                updateUser.LastName = updateUser.LastName.ToLowerCSafe();
+                updateUser.FirstName = updateUser.FirstName.ToLowerCSafe();
+                updateUser.FirstName = updateUser.FirstName.ToLowerCSafe();
+
+                // Saves the changes
+                UserInfoProvider.SetUserInfo(updateUser);
+            }
+            throw new NotImplementedException();
+        }
+
+
+        [HttpGet]
+        [Route("kenticoapi/users/show-roles")]
+        public HttpResponseMessage ShowRoles()
+        {
+            ObjectQuery<RoleInfo> roles;
+            try
+            {
+                roles = RoleInfoProvider.GetRoles().OrderByDescending("RoleDisplayName");
+                List<Object> roleList = roles.Select(
+                    roleInfo => new
+                    {
+                        RoleId = roleInfo.RoleID,
+                        RoleName = roleInfo.RoleName,
+                    }).ToList<Object>();
             }
             catch (Exception e)
             {
                 return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
             }
+            return Request.CreateResponse(HttpStatusCode.OK, new { });
         }
-    }
+    }    
 }

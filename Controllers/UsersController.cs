@@ -63,28 +63,15 @@ namespace CustomWebApi
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = e.Message });
             }
+            string check = CheckIfUsersAndRolesExist(usernames, roleNames, siteName);
+            if (check != "")
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = check });
+
+            }
+
             UserInfo user;
-            //Checks if all usernames are valid
-            for (int i = 0; i < usernames.Length; i++)
-            {
-                user = UserInfoProvider.GetUserInfo(usernames[i]);
-                if (user == null)
-                {
-                    return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = "invalid username: " + usernames[i]});
-                }
-            }
-
             RoleInfo role;
-            //Checks if all roles are valid
-            for (int i = 0; i < roleNames.Length; i++)
-            {
-                role = RoleInfoProvider.GetRoleInfo(roleNames[i], siteName, true);
-                if (role == null)
-                {
-                    return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = "invalid roleName: " + roleNames[i] });
-                }
-            }
-
             for (int i = 0; i < usernames.Length; i++)
             {
                 user = UserInfoProvider.GetUserInfo(usernames[i]);
@@ -155,12 +142,104 @@ namespace CustomWebApi
                         RoleId = roleInfo.RoleID,
                         RoleName = roleInfo.RoleName,
                     }).ToList<Object>();
+                return Request.CreateResponse(HttpStatusCode.OK, new { roleList = roleList });
             }
             catch (Exception e)
             {
                 return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
+            }            
+        }
+
+        [HttpGet]
+        [Route("kenticoapi/users/add-users-to-roles")]
+        public HttpResponseMessage AddUsersToRoles([FromBody]JObject postData)
+        {
+            string[] usernames;
+            int[] roleIds;
+            string siteName;
+            try
+            {
+                usernames = postData["usernames"].ToObject<string[]>();
+                roleIds = postData["roleIds"].ToObject<int[]>();
+                siteName = postData["siteName"].ToObject<string>();
+            }
+            catch (Exception e)
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = e.Message });
+            }
+
+            string checkUsers = CheckIfUsersAndRolesExist(usernames, new string[0], siteName);
+            string checkRoles = AreRoleIdsValid(roleIds);
+            if (checkUsers != "")
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = checkUsers });
+            }
+            if (checkRoles != "")
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = checkRoles });
+            }
+
+            UserInfo user;
+            for (int i = 0; i < usernames.Length; i++)
+            {
+                user = UserInfoProvider.GetUserInfo(usernames[i]);
+                for (int j = 0; j < roleIds.Length; j++)
+                {
+                    try
+                    { 
+                        UserInfoProvider.AddUserToRole(user.UserID, roleIds[j]);
+                    } catch (Exception e)
+                    {
+                        return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = e.Message });
+                    }
+                    
+                }
             }
             return Request.CreateResponse(HttpStatusCode.OK, new { });
         }
+
+
+
+
+
+        private string CheckIfUsersAndRolesExist(string[] usernames, string[] roleNames, string siteName)
+        {
+            UserInfo user;
+            //Checks if all usernames are valid
+            for (int i = 0; i < usernames.Length; i++)
+            {
+                user = UserInfoProvider.GetUserInfo(usernames[i]);
+                if (user == null)
+                {
+                    return "invalid username: " + usernames[i];
+                }
+            }
+
+            RoleInfo role;
+            //Checks if all roles are valid
+            for (int i = 0; i < roleNames.Length; i++)
+            {
+                role = RoleInfoProvider.GetRoleInfo(roleNames[i], siteName, true);
+                if (role == null)
+                {
+                   return "invalid roleName: " + roleNames[i];
+                }
+            }
+            return "";
+        }
+
+        private string AreRoleIdsValid(int[] roleIds)
+        {
+            
+            for (int i = 0; i < roleIds.Length; i++)
+            {
+                if(RoleInfoProvider.GetRoleInfo(roleIds[i]) == null)
+                {
+                    return "invalid roleId: " + roleIds[i];
+                }      
+            }
+            return "";
+        }
+
     }    
 }

@@ -150,7 +150,7 @@ namespace CustomWebApi
             }            
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("kenticoapi/users/add-users-to-roles")]
         public HttpResponseMessage AddUsersToRoles([FromBody]JObject postData)
         {
@@ -197,10 +197,6 @@ namespace CustomWebApi
             }
             return Request.CreateResponse(HttpStatusCode.OK, new { });
         }
-
-
-
-
 
         private string CheckIfUsersAndRolesExist(string[] usernames, string[] roleNames, string siteName)
         {

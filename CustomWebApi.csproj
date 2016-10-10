@@ -55,6 +55,10 @@
     <Reference Include="CMS.MembershipProvider">
       <HintPath>..\Lib\CMS.MembershipProvider.dll</HintPath>
     </Reference>
+    <Reference Include="CMS.Modules, Version=9.0.0.0, Culture=neutral, PublicKeyToken=834b12a258f213f9, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Lib\CMS.Modules.dll</HintPath>
+    </Reference>
     <Reference Include="CMS.Scheduler">
       <HintPath>..\Lib\CMS.Scheduler.dll</HintPath>
     </Reference>
@@ -103,7 +107,9 @@
     <Compile Include="WebApiConfig.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

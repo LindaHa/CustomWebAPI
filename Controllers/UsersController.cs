@@ -129,8 +129,8 @@ namespace CustomWebApi
 
 
         [HttpGet]
-        [Route("kenticoapi/users/show-roles")]
-        public HttpResponseMessage ShowRoles()
+        [Route("kenticoapi/users/get-roles")]
+        public HttpResponseMessage GetRoles()
         {
             ObjectQuery<RoleInfo> roles;
             try

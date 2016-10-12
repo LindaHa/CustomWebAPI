@@ -38,8 +38,9 @@ namespace CustomWebApi
                             Username = dataRow.Field<string>("username"),
                             //UsrName = dataRow.Field<string>("nickname"),
                             Roles = cmsRoleProvider.GetRolesForUser(dataRow.Field<string>("username")),
-                        }).ToList<Object>();
-                return Request.CreateResponse(HttpStatusCode.OK, new { usersList = usersList });
+                        })
+                        .ToList<Object>();
+                return Request.CreateResponse(HttpStatusCode.OK, new { usersList = usersList});
             }
             catch (Exception e)
             {
@@ -141,6 +142,7 @@ namespace CustomWebApi
                     {
                         RoleId = roleInfo.RoleID,
                         RoleName = roleInfo.RoleName,
+                        RoleDisplayName = roleInfo.DisplayName
                     }).ToList<Object>();
                 return Request.CreateResponse(HttpStatusCode.OK, new { roleList = roleList });
             }

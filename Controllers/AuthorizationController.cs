@@ -22,7 +22,9 @@ namespace CustomWebApi
         {
 
             if (roleId == 0)
-                return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = "Invalid roleId" });     
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = "Invalid roleId" });
+            }
            
             try
             {
@@ -46,6 +48,88 @@ namespace CustomWebApi
             catch (Exception e)
             {
                 return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
+            }
+        }
+
+        [HttpPost]
+        [Route("kenticoapi/authorization/delete-role/{roleId}")]
+        public HttpResponseMessage DeleteRole(int roleId = 0)
+        {
+            if (roleId == 0)
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = "Invalid roleId" });
+            }
+
+            RoleInfo deleteRole = new RoleInfo();
+            try
+            {
+                // Gets the role
+                deleteRole = RoleInfoProvider.GetRoleInfo(roleId);
+            }
+            catch (Exception e)
+            {
+                return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
+
+            }
+
+            if (deleteRole != null)
+            {
+                try
+                {
+                    // Deletes the role
+                    RoleInfoProvider.DeleteRoleInfo(deleteRole);
+                    return Request.CreateResponse(HttpStatusCode.OK, new { });
+
+                }
+                catch (Exception e)
+                {
+                    return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
+
+                }
+            }
+            return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = "There's a problem with your role." });
+        }
+
+        [HttpPost]
+        [Route("kenticoapi/authorization/create-new-role/{newRoleName}/{newDisplayName}")]
+        public HttpResponseMessage CreateNewRole([FromBody]JObject postData)
+        {
+            // Creates a new role object
+            RoleInfo newRole = new RoleInfo();
+            string newRoleName, newDisplayName;
+
+            try
+            {
+                newRoleName = postData["roleName"].ToObject<string>();
+                newDisplayName = postData["roleDisplayName"].ToObject<string>();
+            }
+            catch (Exception e)
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = e.Message });
+            }
+
+            // Sets the role properties
+            newRole.RoleName = newRoleName;
+            newRole.DisplayName = newDisplayName;
+            newRole.SiteID = SiteContext.CurrentSiteID;
+
+            // Verifies that the role is unique for the current site
+            if (!RoleInfoProvider.RoleExists(newRole.RoleName, SiteContext.CurrentSiteName))
+            {
+                try
+                {
+                    // Saves the role to the database
+                    RoleInfoProvider.SetRoleInfo(newRole);
+                } catch (Exception e)
+                {
+                    return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
+                }
+                return Request.CreateResponse(HttpStatusCode.OK, new { newRole = newRole });
+            }
+            else
+            {
+                // A role with the same name already exists on the site
+                return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = "A role with the same name already exists on the site" });
             }
         }
     }

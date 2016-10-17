@@ -91,7 +91,7 @@ namespace CustomWebApi
         }
 
         [HttpPost]
-        [Route("kenticoapi/authorization/create-new-role/{newRoleName}/{newDisplayName}")]
+        [Route("kenticoapi/authorization/create-new-role")]
         public HttpResponseMessage CreateNewRole([FromBody]JObject postData)
         {
             // Creates a new role object
@@ -112,7 +112,7 @@ namespace CustomWebApi
             newRole.RoleName = newRoleName;
             newRole.DisplayName = newDisplayName;
             newRole.SiteID = SiteContext.CurrentSiteID;
-
+            int roleId;
             // Verifies that the role is unique for the current site
             if (!RoleInfoProvider.RoleExists(newRole.RoleName, SiteContext.CurrentSiteName))
             {
@@ -120,17 +120,88 @@ namespace CustomWebApi
                 {
                     // Saves the role to the database
                     RoleInfoProvider.SetRoleInfo(newRole);
+                    roleId = RoleInfoProvider.GetRoleInfo(newRole.RoleName, SiteContext.CurrentSiteName).RoleID;
                 } catch (Exception e)
                 {
                     return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
                 }
-                return Request.CreateResponse(HttpStatusCode.OK, new { newRole = newRole });
+                return Request.CreateResponse(HttpStatusCode.OK, new { newRoleId = roleId });
             }
             else
             {
                 // A role with the same name already exists on the site
                 return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = "A role with the same name already exists on the site" });
             }
+        }
+
+        [HttpGet]
+        [Route("kenticoapi/authorization/get-all-permissions")]
+        public HttpResponseMessage GetAllPermissions()
+        {
+            try
+            {
+                List<Object> permissions = PermissionNameInfoProvider.GetPermissionNames()
+                    .Select(
+                            row => new
+                            {
+                                PermissionId = row.PermissionId,
+                                PermissionName = row.PermissionName,
+                                PermissionDisplayName = row.PermissionDisplayName,
+                                PermissionDescription = row.PermissionDescription
+                            }
+                        ).ToList<Object>();
+                return Request.CreateResponse(HttpStatusCode.OK, new { permissionList = permissions });
+            }
+            catch (Exception e)
+            {
+                return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
+            }
+        }
+
+        [HttpPost]
+        [Route("kenticoapi/authorization/assign-permissions-to-roles")]
+        public HttpResponseMessage AssignPermissionsToRoles([FromBody]JObject postData)
+        {
+            int[] roleIds;
+            int[] permissionIds;
+            try
+            {
+                roleIds = postData["roleIds"].ToObject<int[]>();
+                permissionIds = postData["permissionIds"].ToObject<int[]>();
+            }
+            catch (Exception e)
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = e.Message });
+            }
+            
+            if (roleIds != null && permissionIds != null)
+            {
+                RolePermissionInfo newRolePermission;
+
+                foreach (int roleId in roleIds)
+                {
+                    foreach (var permissionId in permissionIds)
+                    {
+                        newRolePermission = new RolePermissionInfo();
+                        try
+                        {   
+                            newRolePermission.RoleID = roleId;
+                            newRolePermission.PermissionID = permissionId;
+                            RolePermissionInfoProvider.SetRolePermissionInfo(newRolePermission);
+                            newRolePermission = null;
+
+                        }
+                        catch(Exception e)
+                        {
+                            return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = e.Message });
+                        }
+                    }
+                }            
+                return Request.CreateResponse(HttpStatusCode.OK);
+            }
+            return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = "No roleIDs or no permissionIDs provided" });
+
+
         }
     }
 }

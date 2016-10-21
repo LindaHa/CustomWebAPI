@@ -158,6 +158,30 @@ namespace CustomWebApi
             }
         }
 
+        [HttpGet]
+        [Route("kenticoapi/authorization/get-role/{roleId}")]
+        public HttpResponseMessage GetRole(int roleId)
+        {
+            try
+            {
+                List<Object> roles = RoleInfoProvider.GetRoles()
+                .WhereEquals("RoleID", roleId)
+                .Select(
+                    row => new
+                    {
+                        RoleId = row.RoleID,
+                        RoleName = row.RoleName,
+                        RoleDisplayName = row.DisplayName
+                    }
+                ).ToList<Object>();
+                return Request.CreateResponse(HttpStatusCode.OK, new { role = roles.First() });
+            }
+            catch (Exception e)
+            {
+                return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
+            }
+        }
+
         [HttpPost]
         [Route("kenticoapi/authorization/assign-permissions-to-roles")]
         public HttpResponseMessage AssignPermissionsToRoles([FromBody]JObject postData)
@@ -197,11 +221,55 @@ namespace CustomWebApi
                         }
                     }
                 }            
-                return Request.CreateResponse(HttpStatusCode.OK);
+                return Request.CreateResponse(HttpStatusCode.OK, new { });
             }
             return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = "No roleIDs or no permissionIDs provided" });
 
 
+        }
+
+        [HttpPost]
+        [Route("kenticoapi/authorization/unassign-permissions-from-roles")]
+        public HttpResponseMessage UnassignPermissionsFromRoles([FromBody]JObject postData)
+        {
+            int[] roleIds;
+            int[] permissionIds;
+            try
+            {
+                roleIds = postData["roleIds"].ToObject<int[]>();
+                permissionIds = postData["permissionIds"].ToObject<int[]>();
+            }
+            catch (Exception e)
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = e.Message });
+            }
+
+            if (roleIds != null && permissionIds != null)
+            {
+                foreach (int roleId in roleIds)
+                {
+                    foreach (var permissionId in permissionIds)
+                    {
+                        try
+                        {                            
+                            // Gets the object representing the role-permission relationship
+                            RolePermissionInfo deleteRolePermission = RolePermissionInfoProvider.GetRolePermissionInfo(roleId, permissionId);
+
+                            if (deleteRolePermission != null)
+                            {
+                                // Removes the permission from the role
+                                RolePermissionInfoProvider.DeleteRolePermissionInfo(deleteRolePermission);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = e.Message });
+                        }
+                    }
+                }
+                return Request.CreateResponse(HttpStatusCode.OK, new { });
+            }
+            return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = "No roleIDs or no permissionIDs provided" });
         }
     }
 }

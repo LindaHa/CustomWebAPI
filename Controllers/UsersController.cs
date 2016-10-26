@@ -104,52 +104,38 @@ namespace CustomWebApi
         [Route("kenticoapi/users/edit-user")]
         public HttpResponseMessage EditUser([FromBody]JObject postData)
         {
-            string username;
+            string username, firstName, surname;
             try
             {
-                username = postData["usernames"].ToObject<string>();
-            } catch (Exception e)
-            {
-                return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
-            }
-
-            UserInfo updateUser = UserInfoProvider.GetUserInfo(username);
-            if (updateUser != null)
-            {
-                // Updates the user's properties
-                updateUser.FirstName = updateUser.FirstName.ToLowerCSafe();
-                updateUser.LastName = updateUser.LastName.ToLowerCSafe();
-                updateUser.FirstName = updateUser.FirstName.ToLowerCSafe();
-                updateUser.FirstName = updateUser.FirstName.ToLowerCSafe();
-
-                // Saves the changes
-                UserInfoProvider.SetUserInfo(updateUser);
-            }
-            throw new NotImplementedException();
-        }
-
-
-        [HttpGet]
-        [Route("kenticoapi/users/get-roles")]
-        public HttpResponseMessage GetRoles()
-        {
-            ObjectQuery<RoleInfo> roles;
-            try
-            {
-                roles = RoleInfoProvider.GetRoles().OrderByDescending("RoleDisplayName");
-                List<Object> roleList = roles.Select(
-                    roleInfo => new
-                    {
-                        RoleId = roleInfo.RoleID,
-                        RoleName = roleInfo.RoleName,
-                        RoleDisplayName = roleInfo.DisplayName
-                    }).ToList<Object>();
-                return Request.CreateResponse(HttpStatusCode.OK, new { roleList = roleList });
+                username = postData["username"].ToObject<string>();
+                firstName = postData["firstName"].ToObject<string>(); 
+                surname = postData["surname"].ToObject<string>();
             }
             catch (Exception e)
             {
                 return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
-            }            
+            }
+            try
+            {
+                UserInfo updateUser = UserInfoProvider.GetUserInfo(username);
+                if (updateUser != null)
+                {
+                    // Updates the user's properties
+                    updateUser.FirstName = firstName;
+                    updateUser.LastName = surname;
+
+                    // Saves the changes
+                    UserInfoProvider.SetUserInfo(updateUser);
+                    return Request.CreateResponse(HttpStatusCode.OK, new { user = updateUser });
+
+                }
+            } catch(Exception e)
+            {
+                return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
+
+            }
+            return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = "User is null" });
+
         }
 
         [HttpPost]

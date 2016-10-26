@@ -17,6 +17,30 @@ namespace CustomWebApi
     public class AuthorizationController : ApiController
     {
         [HttpGet]
+        [Route("kenticoapi/authorization/get-roles")]
+        public HttpResponseMessage GetRoles()
+        {
+            ObjectQuery<RoleInfo> roles;
+            try
+            {
+                roles = RoleInfoProvider.GetRoles().OrderByDescending("RoleDisplayName");
+                List<Object> roleList = roles.Select(
+                    roleInfo => new
+                    {
+                        RoleId = roleInfo.RoleID,
+                        RoleName = roleInfo.RoleName,
+                        RoleDisplayName = roleInfo.DisplayName
+                    }).OrderBy(role => role.RoleDisplayName)
+                    .ToList<Object>();
+                return Request.CreateResponse(HttpStatusCode.OK, new { roleList = roleList });
+            }
+            catch (Exception e)
+            {
+                return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
+            }
+        }
+
+        [HttpGet]
         [Route("kenticoapi/authorization/get-permissions/{roleId}")]
         public HttpResponseMessage GetRolePermissions(int roleId = 0)
         {
@@ -41,7 +65,9 @@ namespace CustomWebApi
                                 PermissionDisplayName = row.PermissionDisplayName,
                                 PermissionDescription = row.PermissionDescription
                             }
-                        ).ToList<Object>();
+                        )
+                        .OrderBy(role => role.PermissionDisplayName)
+                        .ToList<Object>();
 
                 return Request.CreateResponse(HttpStatusCode.OK, new { permissionList = permissions });
             }
@@ -149,7 +175,9 @@ namespace CustomWebApi
                                 PermissionDisplayName = row.PermissionDisplayName,
                                 PermissionDescription = row.PermissionDescription
                             }
-                        ).ToList<Object>();
+                        )
+                        .OrderBy(role => role.PermissionDisplayName)
+                        .ToList<Object>();
                 return Request.CreateResponse(HttpStatusCode.OK, new { permissionList = permissions });
             }
             catch (Exception e)

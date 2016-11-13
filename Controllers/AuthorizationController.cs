@@ -113,7 +113,7 @@ namespace CustomWebApi
 
                 }
             }
-            return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = "There's a problem with your role." });
+            return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = "There's a problem with your role." });
         }
 
         [HttpPost]

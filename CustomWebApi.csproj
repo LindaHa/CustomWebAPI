@@ -66,11 +66,20 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Lib\CMS.SiteProvider.dll</HintPath>
     </Reference>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.6.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Net.Http">
@@ -102,15 +111,28 @@
     <Compile Include="Controllers\SystemController.cs" />
     <Compile Include="Controllers\MyWebAPIController.cs" />
     <Compile Include="Controllers\UsersController.cs" />
+    <Compile Include="DAL\DBContext.cs" />
+    <Compile Include="DAL\Token.cs" />
+    <Compile Include="Migrations\201611201315580_FirstMigration.cs" />
+    <Compile Include="Migrations\201611201315580_FirstMigration.Designer.cs">
+      <DependentUpon>201611201315580_FirstMigration.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Module\CustomWebApiModule.cs" />
     <Compile Include="Module\CustomWebApiModuleMetadata.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WebApiConfig.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="App.config" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\201611201315580_FirstMigration.resx">
+      <DependentUpon>201611201315580_FirstMigration.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

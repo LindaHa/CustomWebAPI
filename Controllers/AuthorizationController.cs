@@ -2,18 +2,18 @@
 using CMS.Membership;
 using CMS.Modules;
 using CMS.SiteProvider;
+using CustomWebApi.Filters;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web.Http;
 
-namespace CustomWebApi
+namespace CustomWebApi.Controllers
 {
+    [Authenticator]
     public class AuthorizationController : ApiController
     {
         [HttpGet]
@@ -109,7 +109,7 @@ namespace CustomWebApi
                 }
                 catch (Exception e)
                 {
-                    return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = e.Message });
 
                 }
             }
@@ -156,7 +156,7 @@ namespace CustomWebApi
             else
             {
                 // A role with the same name already exists on the site
-                return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = "A role with the same name already exists on the site" });
+                return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = "A role with the same name already exists on the site" });
             }
         }
 
@@ -202,7 +202,11 @@ namespace CustomWebApi
                         RoleDisplayName = row.DisplayName
                     }
                 ).ToList<Object>();
-                return Request.CreateResponse(HttpStatusCode.OK, new { role = roles.First() });
+                if (roles.First() != null)
+                {
+                    return Request.CreateResponse(HttpStatusCode.OK, new { role = roles.First() });
+                }
+                return Request.CreateResponse(HttpStatusCode.BadRequest, "No role with the given roleId exists.");
             }
             catch (Exception e)
             {

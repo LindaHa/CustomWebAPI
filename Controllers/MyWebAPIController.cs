@@ -6,7 +6,7 @@ using System.Web.Http;
 using CustomWebApi;
 
 // All of the rest is WebAPI thing, so no Kentico stuff in here
-namespace CustomWebApi
+namespace CustomWebApi.Controllers
 {
     public class MyWebAPIController : ApiController
     {

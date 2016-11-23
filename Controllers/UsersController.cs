@@ -2,22 +2,17 @@
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
-
-using CustomWebApi;
-
-using CMS.Helpers;
-using CMS.Base;
-using CMS.DataEngine;
 using System.Data;
 using System.Linq;
 using System.Collections.Generic;
 using CMS.MembershipProvider;
 using CMS.Membership;
 using Newtonsoft.Json.Linq;
-using CMS.SiteProvider;
+using CustomWebApi.Filters;
 
-namespace CustomWebApi
+namespace CustomWebApi.Controllers
 {
+    [Authenticator]
     public class UsersController : ApiController
     {
         [HttpGet]

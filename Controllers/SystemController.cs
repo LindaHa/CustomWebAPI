@@ -2,9 +2,6 @@
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
-
-using CustomWebApi;
-
 using CMS.Helpers;
 using CMS.Base;
 using CMS.EventLog;
@@ -12,10 +9,13 @@ using CMS.DataEngine;
 using System.Data;
 using System.Linq;
 using System.Collections.Generic;
-using CMS.Scheduler;
+using CustomWebApi.Filters;
+using CMS.SiteProvider;
+using CMS.LicenseProvider;
 
-namespace CustomWebApi
+namespace CustomWebApi.Controllers
 {
+    [Authenticator]
     public class SystemController : ApiController
     {
         [HttpPost]
@@ -31,7 +31,7 @@ namespace CustomWebApi
                 return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = "Unable to restart:" + SystemContext.WebApplicationPhysicalPath });
             }
         }
-
+        
         [HttpGet]
         [Route("kenticoapi/system/show-eventlog")]
         public HttpResponseMessage ShowEventlog()
@@ -82,6 +82,36 @@ namespace CustomWebApi
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
                 return Request.CreateResponse(HttpStatusCode.OK);
+            }
+            catch (Exception e)
+            {
+                return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
+            }
+        }
+
+        [HttpGet]
+        [Route("kenticoapi/system/show-general-information")]
+        public HttpResponseMessage ShowGeneralInformation()
+        {
+            string siteName, siteDisplayName, siteDomainName, siteLastModified, licenseExpiration;
+            //DateTime siteLastModified, licenseExpiration;
+
+            try
+            {
+                siteName = SiteContext.CurrentSiteName;
+                var site = SiteInfoProvider.GetSiteInfo(siteName);
+                siteDisplayName = site.DisplayName;
+                siteDomainName = site.DomainName;
+                siteLastModified = site.SiteLastModified.ToShortDateString();
+                licenseExpiration = LicenseHelper.ApplicationExpires.ToShortDateString();
+                
+                return Request.CreateResponse(HttpStatusCode.OK, new {
+                    siteName = siteName,
+                    siteDisplayName = siteDisplayName,
+                    siteDomainName = siteDomainName,
+                    siteLastModified = siteLastModified,
+                    licenseExpiration = licenseExpiration,
+                });
             }
             catch (Exception e)
             {

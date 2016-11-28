@@ -3,6 +3,8 @@ using CustomWebAPI.DAL;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
@@ -47,7 +49,8 @@ namespace CustomWebApi.Filters
                     actionContext.Request.Properties.Add("LoggedUserInfo", userInfo);
                 }
                 catch (Exception) { }
-            }      
+            }
+            if(userInfo == null || !userInfo.CheckPrivilegeLevel(UserPrivilegeLevelEnum.GlobalAdmin)) actionContext.Response = new HttpResponseMessage(HttpStatusCode.Forbidden);
         }
     }
 }

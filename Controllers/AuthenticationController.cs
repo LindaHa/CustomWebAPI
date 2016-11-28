@@ -17,7 +17,7 @@ namespace CustomWebApi.Controllers
         [Route("kenticoapi/authentication/authenticate-user")]
         public HttpResponseMessage AuthenticateUser([FromBody]JObject postData)
         {
-            UserInfo user = null;
+            UserInfo userInfo = null;
             string username, password;
 
             try
@@ -32,18 +32,21 @@ namespace CustomWebApi.Controllers
             try
             {
                 // Attempts to log into the current site using a username and password
-                user = AuthenticationHelper.AuthenticateUser(username, password, SiteContext.CurrentSiteName);             
+                userInfo= AuthenticationHelper.AuthenticateUser(username, password, SiteContext.CurrentSiteName);             
             }
             catch (Exception e)
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = e.Message });
 
             }
-            if (user != null)
+            if (userInfo != null)
             {
-
+                if(!userInfo.CheckPrivilegeLevel(UserPrivilegeLevelEnum.GlobalAdmin))
+                {
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, new { errorMessage = "You need to be a GLOBAL ADMINISTRATOR to enter the system" });
+                }
                 // Authentication was successful
-                Token token = CreateToken(user.UserID);
+                Token token = CreateToken(userInfo.UserID);
                 return Request.CreateResponse(HttpStatusCode.OK, new { token = token });
             }
             return Request.CreateResponse(HttpStatusCode.Unauthorized, new { errorMessage = "There is a problem with your username or password" });

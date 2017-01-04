@@ -13,7 +13,7 @@ using System.Web.Http;
 
 namespace CustomWebApi.Controllers
 {
-    [Authenticator]
+    //[Authorizator]
     public class AuthorizationController : ApiController
     {
         [HttpGet]
@@ -147,11 +147,16 @@ namespace CustomWebApi.Controllers
                     // Saves the role to the database
                     RoleInfoProvider.SetRoleInfo(newRole);
                     roleId = RoleInfoProvider.GetRoleInfo(newRole.RoleName, SiteContext.CurrentSiteName).RoleID;
-                } catch (Exception e)
+                }
+                catch (CodeNameNotValidException e)
+                {
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = e.Message });
+                }
+                catch (Exception e)
                 {
                     return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
                 }
-                return Request.CreateResponse(HttpStatusCode.OK, new { newRoleId = roleId });
+                    return Request.CreateResponse(HttpStatusCode.OK, new { newRoleId = roleId });
             }
             else
             {

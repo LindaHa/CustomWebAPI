@@ -52,7 +52,7 @@ namespace CustomWebApi.Controllers
             return Request.CreateResponse(HttpStatusCode.Unauthorized, new { errorMessage = "There is a problem with your username or password" });
         }
 
-        [Authenticator]
+        [Authorizator]
         [HttpGet]
         [Route("kenticoapi/authentication/get-current-user")]
         public HttpResponseMessage GetCurrentUser()
@@ -82,7 +82,7 @@ namespace CustomWebApi.Controllers
             return Request.CreateResponse(HttpStatusCode.NotFound, new { errorMessage = "There is a problem with the current user." });
         }
 
-        [Authenticator]
+        [Authorizator]
         [HttpPost]
         [Route("kenticoapi/authentication/sign-out-user")]
         public HttpResponseMessage SignOutUser()
@@ -120,6 +120,8 @@ namespace CustomWebApi.Controllers
         {
             Token token;
             string code = CreateRandomCode(length);
+
+            if (length < 0) length = 32;
 
             using (var context = new DBContext())
             {

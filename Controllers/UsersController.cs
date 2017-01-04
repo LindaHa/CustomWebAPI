@@ -12,7 +12,7 @@ using CustomWebApi.Filters;
 
 namespace CustomWebApi.Controllers
 {
-    [Authenticator]
+    [Authorizator]
     public class UsersController : ApiController
     {
         [HttpGet]

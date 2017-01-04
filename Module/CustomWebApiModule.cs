@@ -1,14 +1,12 @@
 using System.Web.Http;
-
 using CMS;
 using CMS.DataEngine;
-
 using CustomWebApi;
 
 [assembly: RegisterModule(typeof(CustomWebApiModule))]
 
 namespace CustomWebApi
-{
+{ 
     /// <summary>
     /// Represents the Web API module.
     /// </summary>

@@ -112,9 +112,8 @@
   <ItemGroup>
     <Compile Include="Controllers\AuthenticationController.cs" />
     <Compile Include="Controllers\AuthorizationController.cs" />
-    <Compile Include="Filters\AuthenticatorFilter.cs" />
+    <Compile Include="Filters\AuthorizatorFilter.cs" />
     <Compile Include="Controllers\SystemController.cs" />
-    <Compile Include="Controllers\MyWebAPIController.cs" />
     <Compile Include="Controllers\UsersController.cs" />
     <Compile Include="DAL\DBContext.cs" />
     <Compile Include="DAL\Token.cs" />

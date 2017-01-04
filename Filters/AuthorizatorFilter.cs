@@ -1,25 +1,19 @@
 ﻿using CMS.Membership;
 using CustomWebAPI.DAL;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web;
-using System.Web.Http;
 using System.Web.Http.Controllers;
 using System.Web.Http.Filters;
 
 namespace CustomWebApi.Filters
 {
-    public class Authenticator : ActionFilterAttribute
+    public class Authorizator : ActionFilterAttribute
     {
         public override void OnActionExecuting(HttpActionContext actionContext)
         {
-            var request = actionContext.Request;
-            var headers = request.Headers;
+            var headers = actionContext.Request.Headers;
             Token token = null;
             UserInfo userInfo = null;
 
@@ -35,7 +29,6 @@ namespace CustomWebApi.Filters
                         if (token != null)
                         {
                             token.Expiration = DateTime.Now.AddMinutes(10);
-
                         }
                         context.SaveChanges();
                     }
@@ -50,7 +43,10 @@ namespace CustomWebApi.Filters
                 }
                 catch (Exception) { }
             }
-            if(userInfo == null || !userInfo.CheckPrivilegeLevel(UserPrivilegeLevelEnum.GlobalAdmin)) actionContext.Response = new HttpResponseMessage(HttpStatusCode.Forbidden);
+            if (userInfo == null || !userInfo.CheckPrivilegeLevel(UserPrivilegeLevelEnum.GlobalAdmin))
+            {
+                actionContext.Response = new HttpResponseMessage(HttpStatusCode.Forbidden);
+            }
         }
     }
 }

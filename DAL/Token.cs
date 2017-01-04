@@ -17,8 +17,5 @@ namespace CustomWebAPI.DAL
 
         [Required]
         public DateTime Expiration { get; set; }
-
-
-
     }
 }

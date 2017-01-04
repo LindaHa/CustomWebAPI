@@ -15,7 +15,7 @@ using CMS.LicenseProvider;
 
 namespace CustomWebApi.Controllers
 {
-    [Authenticator]
+    [Authorizator]
     public class SystemController : ApiController
     {
         [HttpPost]

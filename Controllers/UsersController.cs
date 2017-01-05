@@ -12,20 +12,29 @@ using CustomWebApi.Filters;
 
 namespace CustomWebApi.Controllers
 {
+    /// <summary>
+    /// The controller to manage users
+    /// </summary>
+    /// <seealso cref="System.Web.Http.ApiController" />
     [Authorizator]
     public class UsersController : ApiController
     {
+        /// <summary>
+        /// Gets all users.
+        /// </summary>
+        /// <returns> Appropriate HTTP message and if successful returns all users</returns>
         [HttpGet]
         [Route("kenticoapi/users")]
         public HttpResponseMessage GetAllUsers()
         {
             CMSRoleProvider cmsRoleProvider = new CMSRoleProvider();
             try
-            {
-                DataSet users = UserInfoProvider.GetFullUsers("", "UserID ASC");
+            {  
+                //gets all users ordered depending on their IDs ascending
+                DataSet users = UserInfoProvider.GetFullUsers("", "UserID ASC");                
                 List<Object> usersList = users.Tables[0].AsEnumerable().Select(
                         dataRow => new
-                        {
+                        {   //puts the relevant information into a new object to represent the user
                             UserId = dataRow.Field<int>("userid"),
                             FirstName = dataRow.Field<string>("firstname"),
                             Surname = dataRow.Field<string>("lastname"),
@@ -35,6 +44,7 @@ namespace CustomWebApi.Controllers
                             Roles = cmsRoleProvider.GetRolesForUser(dataRow.Field<string>("username")),
                         })
                         .ToList<Object>();
+                //everything is OK, the users are also returned
                 return Request.CreateResponse(HttpStatusCode.OK, new { usersList = usersList});
             }
             catch (Exception e)
@@ -43,12 +53,20 @@ namespace CustomWebApi.Controllers
             }
         }
 
+        /// <summary>
+        /// Removes the users from roles.
+        /// </summary>
+        /// <param name="postData">
+        /// The post data contain the usernames, rolenames and the name of the current site.
+        /// </param>
+        /// <returns> Appropriate HTTP message</returns>
         [HttpPost]
         [Route("kenticoapi/users/remove-users-from-roles")]
         public HttpResponseMessage RemoveUsersFromRoles([FromBody]JObject postData)
         {
             string[] usernames, roleNames;
             string siteName;
+            //parsing postdata
             try
             {
                 usernames = postData["usernames"].ToObject<string[]>();
@@ -59,24 +77,27 @@ namespace CustomWebApi.Controllers
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = e.Message });
             }
+            //checks if the given usernames and role names are valid on the given site
             string check = CheckIfUsersAndRolesExist(usernames, roleNames, siteName);
             if (check != "")
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = check });
-
             }
 
             UserInfo user;
             RoleInfo role;
+            //for all usernames
             for (int i = 0; i < usernames.Length; i++)
-            {
+            {   //gets the user according to the username
                 user = UserInfoProvider.GetUserInfo(usernames[i]);
+                //and for all role names
                 for (int j = 0; j < roleNames.Length; j++)
-                {
+                {   
+                    //all global and membership roles will be checked
                     bool checkGlobalRoles = true;
                     bool checkMembership = true;
 
-                    // Checks whether the user is assigned to a role with the "Rolename" code name
+                    // Checks whether the user is assigned to a role with the role name 
                     if (user.IsInRole(roleNames[j], siteName, checkGlobalRoles, checkMembership))
                     {
                         // Removes the user from the role
@@ -95,11 +116,19 @@ namespace CustomWebApi.Controllers
             return Request.CreateResponse(HttpStatusCode.OK, new { });            
         }
 
+        /// <summary>
+        /// Edits the user.
+        /// </summary>
+        /// <param name="postData">
+        /// The post data contain the username, the first and last name of the user.
+        /// </param>
+        /// <returns> Appropriate HTTP message and if successful the updated user</returns>
         [HttpPost]
         [Route("kenticoapi/users/edit-user")]
         public HttpResponseMessage EditUser([FromBody]JObject postData)
         {
             string username, firstName, surname;
+            //parsing postdata
             try
             {
                 username = postData["username"].ToObject<string>();
@@ -112,6 +141,7 @@ namespace CustomWebApi.Controllers
             }
             try
             {
+                //gets the user by username
                 UserInfo updateUser = UserInfoProvider.GetUserInfo(username);
                 if (updateUser != null)
                 {
@@ -121,6 +151,7 @@ namespace CustomWebApi.Controllers
 
                     // Saves the changes
                     UserInfoProvider.SetUserInfo(updateUser);
+                    //everything is OK, the updated user is also returned
                     return Request.CreateResponse(HttpStatusCode.OK, new { user = updateUser });
 
                 }
@@ -133,6 +164,13 @@ namespace CustomWebApi.Controllers
 
         }
 
+        /// <summary>
+        /// Adds the given users to the given roles.
+        /// </summary>
+        /// <param name="postData">
+        /// The post data contain the usernames, role IDs and the name of the current site.
+        /// </param>
+        /// <returns> Appropriate HTTP message</returns>
         [HttpPost]
         [Route("kenticoapi/users/add-users-to-roles")]
         public HttpResponseMessage AddUsersToRoles([FromBody]JObject postData)
@@ -140,6 +178,7 @@ namespace CustomWebApi.Controllers
             string[] usernames;
             int[] roleIds;
             string siteName;
+            //parsing postdata
             try
             {
                 usernames = postData["usernames"].ToObject<string[]>();
@@ -151,8 +190,11 @@ namespace CustomWebApi.Controllers
                 return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = e.Message });
             }
 
+            //checks if usernames on the site name are valid
             string checkUsers = CheckIfUsersAndRolesExist(usernames, new string[0], siteName);
+            //checks if role are valid
             string checkRoles = AreRoleIdsValid(roleIds);
+            //the errorMessage contains which username or rolename is invalid
             if (checkUsers != "")
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = checkUsers });
@@ -163,11 +205,15 @@ namespace CustomWebApi.Controllers
             }
 
             UserInfo user;
+            //for each username
             for (int i = 0; i < usernames.Length; i++)
             {
+                //gets the user by ID
                 user = UserInfoProvider.GetUserInfo(usernames[i]);
+                //for every role ID
                 for (int j = 0; j < roleIds.Length; j++)
                 {
+                    //assign user to role
                     try
                     { 
                         UserInfoProvider.AddUserToRole(user.UserID, roleIds[j]);

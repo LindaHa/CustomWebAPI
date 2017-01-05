@@ -11,8 +11,19 @@ using CustomWebApi.Filters;
 
 namespace CustomWebApi.Controllers
 {
+    /// <summary>
+    /// The controller checks if a user is authorized to fulfill a request
+    /// </summary>
+    /// <seealso cref="System.Web.Http.ApiController" />
     public class AuthenticationController : ApiController
     {
+        /// <summary>
+        /// Authenticates the current user.
+        /// </summary>
+        /// <param name="postData">
+        /// The post data contain the username and password
+        /// </param>
+        /// <returns>Appropriate HTTP message and if successful the access token</returns>
         [HttpPost]
         [Route("kenticoapi/authentication/authenticate-user")]
         public HttpResponseMessage AuthenticateUser([FromBody]JObject postData)
@@ -20,6 +31,7 @@ namespace CustomWebApi.Controllers
             UserInfo userInfo = null;
             string username, password;
 
+            //parsing of the postdata
             try
             {
                 username = postData["username"].ToObject<string>();
@@ -41,17 +53,23 @@ namespace CustomWebApi.Controllers
             }
             if (userInfo != null)
             {
+                // If user is not a glbal Admin return Forbidden
                 if(!userInfo.CheckPrivilegeLevel(UserPrivilegeLevelEnum.GlobalAdmin))
                 {
                     return Request.CreateResponse(HttpStatusCode.Forbidden, new { errorMessage = "You need to be a GLOBAL ADMINISTRATOR to enter the system" });
                 }
                 // Authentication was successful
                 Token token = CreateToken(userInfo.UserID);
+                //everything is OK, the token is also returned
                 return Request.CreateResponse(HttpStatusCode.OK, new { token = token });
             }
             return Request.CreateResponse(HttpStatusCode.Unauthorized, new { errorMessage = "There is a problem with your username or password" });
         }
 
+        /// <summary>
+        /// Gets the current user.
+        /// </summary>
+        /// <returns>Appropriate HTTP message and if successful the current user</returns>
         [Authorizator]
         [HttpGet]
         [Route("kenticoapi/authentication/get-current-user")]
@@ -60,9 +78,7 @@ namespace CustomWebApi.Controllers
             UserInfo user = null;
             try
             {
-                //bool boolTrue = true;
                 // Attempts to log into the current site using a username and password
-                //user = AuthenticationHelper.GetCurrentUser(out boolTrue);
                 user = (UserInfo) Request.Properties["LoggedUserInfo"];
             }
             catch (Exception e)
@@ -72,7 +88,7 @@ namespace CustomWebApi.Controllers
             }
             if (user != null)
             {
-                // Authentication was successful
+                // Authentication was successful, the user is also returned
                 return Request.CreateResponse(HttpStatusCode.OK, new {
                     UserID = user.UserID,
                     FirstName = user.FirstName,
@@ -82,6 +98,10 @@ namespace CustomWebApi.Controllers
             return Request.CreateResponse(HttpStatusCode.NotFound, new { errorMessage = "There is a problem with the current user." });
         }
 
+        /// <summary>
+        /// Signs the user out.
+        /// </summary>
+        /// <returns>Appropriate HTTP message</returns>
         [Authorizator]
         [HttpPost]
         [Route("kenticoapi/authentication/sign-out-user")]
@@ -90,16 +110,20 @@ namespace CustomWebApi.Controllers
             UserInfo user = null;
             try
             {
+                //gets the currently logged in user
                 user = (UserInfo)Request.Properties["LoggedUserInfo"];
                 var request = Request;
                 var headers = request.Headers;
 
+                //checks if the header has the users valid access token
                 if (headers.Contains("AccessToken"))
                 {
                     string tokenCode = headers.GetValues("AccessToken").FirstOrDefault();
                     if (tokenCode != null)
                     {
+                        //the token is present, the user is signed out
                         AuthenticationHelper.SignOut();
+                        //the token is being removed from the database
                         using (var context = new DBContext())
                         {
                             context.Token.RemoveRange(context.Token.Where(tok => tok.Code == tokenCode));
@@ -119,12 +143,14 @@ namespace CustomWebApi.Controllers
         private Token CreateToken(int userID, int length = 32)
         {
             Token token;
+            //the pseudo-random code is generated
             string code = CreateRandomCode(length);
 
             if (length < 0) length = 32;
 
             using (var context = new DBContext())
             {
+                //the code is tested against the DB if it doesn't exist already
                 while (GetTokenByCode(code) != null)
                 {
                     code = CreateRandomCode(length);

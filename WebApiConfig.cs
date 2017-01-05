@@ -7,8 +7,10 @@ using System.Web.Http;
 
 namespace CustomWebApi
 {
+    /// <exclude />
     public static class WebApiConfig
     {
+        /// <exclude />
         public static void Register(HttpConfiguration config)
         {
             // Web API routes

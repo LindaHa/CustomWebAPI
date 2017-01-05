@@ -13,9 +13,19 @@ using System.Web.Http;
 
 namespace CustomWebApi.Controllers
 {
-    //[Authorizator]
+    /// <summary>
+    /// The controller to manage roles and permissions
+    /// </summary>
+    /// <seealso cref="System.Web.Http.ApiController" />
+    [Authorizator]
     public class AuthorizationController : ApiController
     {
+        /// <summary>
+        /// Gets all roles.
+        /// </summary>
+        /// <returns>
+        /// Appropriate HTTP message and if successful all Roles
+        /// </returns>    
         [HttpGet]
         [Route("kenticoapi/authorization/get-roles")]
         public HttpResponseMessage GetRoles()
@@ -23,7 +33,9 @@ namespace CustomWebApi.Controllers
             ObjectQuery<RoleInfo> roles;
             try
             {
+                //the roles are got
                 roles = RoleInfoProvider.GetRoles().OrderByDescending("RoleDisplayName");
+                //puts the relevant information into a new object to represent the role
                 List<Object> roleList = roles.Select(
                     roleInfo => new
                     {
@@ -32,6 +44,7 @@ namespace CustomWebApi.Controllers
                         RoleDisplayName = roleInfo.DisplayName
                     }).OrderBy(role => role.RoleDisplayName)
                     .ToList<Object>();
+                //everything is OK, the roles are also returned
                 return Request.CreateResponse(HttpStatusCode.OK, new { roleList = roleList });
             }
             catch (Exception e)
@@ -40,6 +53,13 @@ namespace CustomWebApi.Controllers
             }
         }
 
+        /// <summary>
+        /// Gets the role permissions by role ID.
+        /// </summary>
+        /// <param name="roleId">The role identifier.</param>
+        /// <returns>
+        /// Appropriate HTTP message and if successful all permissions of the given role
+        /// </returns>
         [HttpGet]
         [Route("kenticoapi/authorization/get-permissions/{roleId}")]
         public HttpResponseMessage GetRolePermissions(int roleId = 0)
@@ -52,6 +72,7 @@ namespace CustomWebApi.Controllers
            
             try
             {
+                //the relevant permissions are retrieved 
                 List<Object> permissions = PermissionNameInfoProvider.GetPermissionNames()
                     .WhereIn("PermissionID", RolePermissionInfoProvider
                         .GetRolePermissions()
@@ -59,7 +80,7 @@ namespace CustomWebApi.Controllers
                         .WhereEquals("RoleID", roleId))
                         .Select(
                             row => new
-                            {
+                            { //puts the relevant information into a new object to represent the permission
                                 PermissionId = row.PermissionId,
                                 PermissionName = row.PermissionName,
                                 PermissionDisplayName = row.PermissionDisplayName,
@@ -68,7 +89,7 @@ namespace CustomWebApi.Controllers
                         )
                         .OrderBy(role => role.PermissionDisplayName)
                         .ToList<Object>();
-
+                //everything is OK, the permissions are also returned
                 return Request.CreateResponse(HttpStatusCode.OK, new { permissionList = permissions });
             }
             catch (Exception e)
@@ -77,6 +98,11 @@ namespace CustomWebApi.Controllers
             }
         }
 
+        /// <summary>
+        /// Deletes the role by ID.
+        /// </summary>
+        /// <param name="roleId">The role identifier.</param>
+        /// <returns>Appropriate HTTP message</returns>
         [HttpPost]
         [Route("kenticoapi/authorization/delete-role/{roleId}")]
         public HttpResponseMessage DeleteRole(int roleId = 0)
@@ -116,6 +142,15 @@ namespace CustomWebApi.Controllers
             return Request.CreateResponse(HttpStatusCode.BadRequest, new { errorMessage = "There's a problem with your role." });
         }
 
+        /// <summary>
+        /// Creates the new role.
+        /// </summary>
+        /// <param name="postData">
+        /// The post data contain the name and display name of the new role
+        /// </param>
+        /// <returns>
+        /// Appropriate HTTP message and if successful the ID of the new role
+        /// </returns>
         [HttpPost]
         [Route("kenticoapi/authorization/create-new-role")]
         public HttpResponseMessage CreateNewRole([FromBody]JObject postData)
@@ -124,6 +159,7 @@ namespace CustomWebApi.Controllers
             RoleInfo newRole = new RoleInfo();
             string newRoleName, newDisplayName;
 
+            //parsing of the postdata
             try
             {
                 newRoleName = postData["roleName"].ToObject<string>();
@@ -156,7 +192,8 @@ namespace CustomWebApi.Controllers
                 {
                     return Request.CreateResponse(HttpStatusCode.ServiceUnavailable, new { errorMessage = e.Message });
                 }
-                    return Request.CreateResponse(HttpStatusCode.OK, new { newRoleId = roleId });
+                //everything is OK, the ID of the new role are also returned
+                return Request.CreateResponse(HttpStatusCode.OK, new { newRoleId = roleId });
             }
             else
             {
@@ -165,6 +202,12 @@ namespace CustomWebApi.Controllers
             }
         }
 
+        /// <summary>
+        /// Gets all permissions.
+        /// </summary>
+        /// <returns>
+        /// Appropriate HTTP message and if successful all perissions
+        /// </returns>
         [HttpGet]
         [Route("kenticoapi/authorization/get-all-permissions")]
         public HttpResponseMessage GetAllPermissions()
@@ -172,7 +215,7 @@ namespace CustomWebApi.Controllers
             try
             {
                 List<Object> permissions = PermissionNameInfoProvider.GetPermissionNames()
-                    .Select(
+                    .Select( //the relevant permission information are retrieved into a new object
                             row => new
                             {
                                 PermissionId = row.PermissionId,
@@ -183,6 +226,7 @@ namespace CustomWebApi.Controllers
                         )
                         .OrderBy(role => role.PermissionDisplayName)
                         .ToList<Object>();
+                //everything is OK, the permissions are also returned
                 return Request.CreateResponse(HttpStatusCode.OK, new { permissionList = permissions });
             }
             catch (Exception e)
@@ -191,6 +235,13 @@ namespace CustomWebApi.Controllers
             }
         }
 
+        /// <summary>
+        /// Gets the role.
+        /// </summary>
+        /// <param name="roleId">The role identifier.</param>
+        /// <returns>
+        /// Appropriate HTTP message and if successful the role of the given ID
+        /// </returns>
         [HttpGet]
         [Route("kenticoapi/authorization/get-role/{roleId}")]
         public HttpResponseMessage GetRole(int roleId)
@@ -201,7 +252,7 @@ namespace CustomWebApi.Controllers
                 .WhereEquals("RoleID", roleId)
                 .Select(
                     row => new
-                    {
+                    { //puts the relevant information into a new object representing the role
                         RoleId = row.RoleID,
                         RoleName = row.RoleName,
                         RoleDisplayName = row.DisplayName
@@ -209,6 +260,7 @@ namespace CustomWebApi.Controllers
                 ).ToList<Object>();
                 if (roles.First() != null)
                 {
+                    //everything is OK, the role is also returned
                     return Request.CreateResponse(HttpStatusCode.OK, new { role = roles.First() });
                 }
                 return Request.CreateResponse(HttpStatusCode.BadRequest, "No role with the given roleId exists.");
@@ -219,12 +271,20 @@ namespace CustomWebApi.Controllers
             }
         }
 
+        /// <summary>
+        /// Assigns the given permissions to the given roles.
+        /// </summary>
+        /// <param name="postData">
+        /// The post data contain the IDs of the roles and permissions.
+        /// </param>       
+        /// <returns>Appropriate HTTP message</returns>
         [HttpPost]
         [Route("kenticoapi/authorization/assign-permissions-to-roles")]
         public HttpResponseMessage AssignPermissionsToRoles([FromBody]JObject postData)
         {
             int[] roleIds;
             int[] permissionIds;
+            //the parsing of the postdata
             try
             {
                 roleIds = postData["roleIds"].ToObject<int[]>();
@@ -239,13 +299,14 @@ namespace CustomWebApi.Controllers
             {
                 RolePermissionInfo newRolePermission;
 
+                //for every given role
                 foreach (int roleId in roleIds)
-                {
-                    foreach (var permissionId in permissionIds)
+                { //and every given permission
+                    foreach (int permissionId in permissionIds)
                     {
                         newRolePermission = new RolePermissionInfo();
                         try
-                        {   
+                        {   //join the role with the permission
                             newRolePermission.RoleID = roleId;
                             newRolePermission.PermissionID = permissionId;
                             RolePermissionInfoProvider.SetRolePermissionInfo(newRolePermission);
@@ -265,12 +326,20 @@ namespace CustomWebApi.Controllers
 
         }
 
+        /// <summary>
+        /// Unassigns the given permissions from the given roles.
+        /// </summary>
+        /// <param name="postData">
+        /// The post data contain the IDs of the role and permissions.
+        /// </param>
+        /// <returns>Appropriate HTTP message</returns>
         [HttpPost]
         [Route("kenticoapi/authorization/unassign-permissions-from-roles")]
         public HttpResponseMessage UnassignPermissionsFromRoles([FromBody]JObject postData)
         {
             int[] roleIds;
             int[] permissionIds;
+            //parsing of the postdata
             try
             {
                 roleIds = postData["roleIds"].ToObject<int[]>();
@@ -282,9 +351,9 @@ namespace CustomWebApi.Controllers
             }
 
             if (roleIds != null && permissionIds != null)
-            {
+            { //for every given role
                 foreach (int roleId in roleIds)
-                {
+                { //and for every given permission
                     foreach (var permissionId in permissionIds)
                     {
                         try
